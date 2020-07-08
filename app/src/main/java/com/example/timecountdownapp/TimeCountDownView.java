@@ -18,7 +18,8 @@ import androidx.appcompat.widget.AppCompatTextView;
  * Created by longlk on 8/7/2020
  *
  * This class handles animation transition for time digit, it will always display time as XX
- * <str>Note: </str>
+ *
+ * <br>Note: It will handle only 2 digits</br>
  * */
 public class TimeCountDownView extends AppCompatTextView {
 
@@ -171,13 +172,13 @@ public class TimeCountDownView extends AppCompatTextView {
             @Override
             public void onAnimationEnd(Animator animation) {
                 mHasFirstDigitChanged = false;
-                // Swap again so the "next" digit will become the current settled digit :)
+                // Reset so the digit that is now above top will be the same as current settled digit :)
                 mFirstDigitBaseline.y = mDefaultBaselineY;
                 mFirstNextDigitBaseline.y = mDefaultOuterBaselineY;
                 mFirstDigitText = mFirstNextDigitText;
 
                 mHasSecondDigitChanged = false;
-                // Swap again so the "next" digit will become the current settled digit :)
+                // Reset so the digit that is now above top will be the same as current settled digit :)
                 mSecondDigitBaseline.y = mDefaultBaselineY;
                 mSecondNextDigitBaseline.y = mDefaultOuterBaselineY;
                 mSecondDigitText = mSecondNextDigitText;
@@ -196,7 +197,7 @@ public class TimeCountDownView extends AppCompatTextView {
     }
 
     public void stopAnimator() {
-        if (mTimeAnimator != null) {
+        if (mTimeAnimator != null && mTimeAnimator.isRunning()) {
             mTimeAnimator.end();
         }
     }
