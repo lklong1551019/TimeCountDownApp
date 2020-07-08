@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
+        <com.example.timecountdownapp.TimeCountDownView
             android:id="@+id/tvDayCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
         app:layout_constraintStart_toEndOf="@id/vgDay"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
+        <com.example.timecountdownapp.TimeCountDownView
             android:id="@+id/tvHourCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -70,7 +70,7 @@
         app:layout_constraintStart_toEndOf="@id/vgHour"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
+        <com.example.timecountdownapp.TimeCountDownView
             android:id="@+id/tvMinuteCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -100,7 +100,6 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <com.example.timecountdownapp.TimeCountDownView
-            android:textSize="36sp"
             android:id="@+id/tvSecondCount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

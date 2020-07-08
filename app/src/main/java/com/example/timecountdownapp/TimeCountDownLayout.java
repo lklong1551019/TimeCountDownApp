@@ -3,31 +3,29 @@ package com.example.timecountdownapp;
 import android.content.Context;
 import android.os.CountDownTimer;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+/**
+ * Created by longlk on 8/7/2020
+ * */
 public class TimeCountDownLayout extends LinearLayout {
 
     private ViewGroup mVgDay;
-    private ViewGroup mVgHour;
-    private ViewGroup mVgMinute;
-    private ViewGroup mVgSecond;
 
-    private TextView mTvDay;
-    private TextView mTvHour;
-    private TextView mTvMinute;
+    private TimeCountDownView mTvDay;
+    private TimeCountDownView mTvHour;
+    private TimeCountDownView mTvMinute;
     private TimeCountDownView mTvSecond;
 
     private long mTotalSeconds;
-    private long mSeconds;
-    private long mMinutes;
-    private long mHours;
-    private long mDays;
+    private int mSeconds;
+    private int mMinutes;
+    private int mHours;
+    private int mDays;
 
     private CountDownTimer mCountDownTimer;
 
@@ -44,9 +42,6 @@ public class TimeCountDownLayout extends LinearLayout {
         inflate(context, R.layout.layout_time_count_down, this);
 
         mVgDay = findViewById(R.id.vgDay);
-        mVgHour = findViewById(R.id.vgHour);
-        mVgMinute = findViewById(R.id.vgMinute);
-        mVgSecond = findViewById(R.id.vgSecond);
 
         mTvDay = findViewById(R.id.tvDayCount);
         mTvHour = findViewById(R.id.tvHourCount);
@@ -57,36 +52,44 @@ public class TimeCountDownLayout extends LinearLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        stopTimer();
+        stopTimerAndAnimation();
     }
 
-    public void setCountdownTime(long countdownTimeInMilliseconds) {
-        mTotalSeconds = countdownTimeInMilliseconds / 1000;
-        Log.i("debug_test","--> " + mTotalSeconds);
+    /**
+     * @param countdownInterval in milliseconds
+     * */
+    public void setCountdownInterval(long countdownInterval) {
+        mTotalSeconds = countdownInterval / 1000;
+        if (!checkIfCouldHandleTime(mTotalSeconds))
+            return;
+
         updateTimes();
 
         if (mDays <= 0) {
             mVgDay.setVisibility(View.GONE);
         }
         startTimer();
+    }
 
-        Log.i("debug_test"," " + mDays + " : " + mHours + " : " + mMinutes + " : " + mSeconds);
+    private boolean checkIfCouldHandleTime(long totalSeconds) {
+        int days = (int) (totalSeconds / 86400);
+        return days < 100;
     }
 
     private void updateTimes() {
-        mSeconds = mTotalSeconds % 60;
-        mMinutes = (mTotalSeconds / 60) % 60;
-        mHours = (mTotalSeconds / 3600) % 24;
-        mDays = mTotalSeconds / 86400;
+        mSeconds = (int) (mTotalSeconds % 60); // Never exceeds 60
+        mMinutes = (int) ((mTotalSeconds / 60) % 60); // Never exceeds 60
+        mHours = (int) ((mTotalSeconds / 3600) % 24); // Never exceeds 24
+        mDays = (int) (mTotalSeconds / 86400);
 
-        mTvDay.setText(String.valueOf(mDays));
-        mTvHour.setText(String.valueOf(mHours));
-        mTvMinute.setText(String.valueOf(mMinutes));
-        mTvSecond.setNextTime((int) mSeconds);
+        mTvDay.setNextTime(mDays);
+        mTvHour.setNextTime(mHours);
+        mTvMinute.setNextTime(mMinutes);
+        mTvSecond.setNextTime(mSeconds);
     }
 
     public void startTimer() {
-        if (mCountDownTimer != null) return;
+        if (!checkIfCouldHandleTime(mTotalSeconds) || mCountDownTimer != null) return;
 
         mCountDownTimer = new CountDownTimer(mTotalSeconds * 1000, 1000) {
             @Override
@@ -103,10 +106,14 @@ public class TimeCountDownLayout extends LinearLayout {
         mCountDownTimer.start();
     }
 
-    public void stopTimer() {
+    public void stopTimerAndAnimation() {
         if (mCountDownTimer != null) {
             mCountDownTimer.cancel();
             mCountDownTimer = null;
         }
+        mTvDay.stopAnimator();
+        mTvHour.stopAnimator();
+        mTvMinute.stopAnimator();
+        mTvSecond.stopAnimator();
     }
 }

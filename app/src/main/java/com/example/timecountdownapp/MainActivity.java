@@ -13,7 +13,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mLayout = findViewById(R.id.timeCountDown);
-        mLayout.setCountdownTime(86405000);
+        mLayout.setCountdownInterval(86405000000L);
     }
 
     @Override
@@ -26,6 +26,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        mLayout.stopTimer();
+        mLayout.stopTimerAndAnimation();
     }
 }
