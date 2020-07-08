@@ -1,6 +1,8 @@
 package com.example.timecountdownapp;
 
 
+import android.animation.Animator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -8,6 +10,7 @@ import android.graphics.PointF;
 import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.animation.OvershootInterpolator;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatTextView;
@@ -16,8 +19,8 @@ public class TimeCountDownView extends AppCompatTextView {
 
     private static final String DEFAULT_TIME = "0";
 
-    private int mFirstDigit = 0;
-    private int mSecondDigit = 0;
+    private int mFirstDigit = -1;
+    private int mSecondDigit = -1;
     private String mFirstDigitText, mFirstNextDigitText;
     private String mSecondDigitText, mSecondNextDigitText;
 
@@ -31,6 +34,7 @@ public class TimeCountDownView extends AppCompatTextView {
 
     private boolean mHasFirstDigitChanged = false;
     private boolean mHasSecondDigitChanged = false;
+    private ValueAnimator mTimeAnimator;
 
     public TimeCountDownView(Context context) {
         this(context, null);
@@ -59,7 +63,6 @@ public class TimeCountDownView extends AppCompatTextView {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Log.i("debug_test","--> " + mTextPaint.measureText(DEFAULT_TIME));
         setMeasuredDimension(mPreMeasuredWidth, mPreMeasuredHeight);
     }
 
@@ -67,42 +70,16 @@ public class TimeCountDownView extends AppCompatTextView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        if (mHasFirstDigitChanged) {
-            // Go above top of this view
-            mFirstDigitBaseline.y -= 16;
-            mFirstNextDigitBaseline.y -= 16;
-            if (mFirstNextDigitBaseline.y <= mDefaultBaselineY) {
-                mHasFirstDigitChanged = false;
-                // Swap again so the "next" digit will become the current settled digit :)
-                mFirstDigitBaseline.y = mDefaultBaselineY;
-                mFirstNextDigitBaseline.y = mDefaultOuterBaselineY;
-
-                mFirstDigitText = mFirstNextDigitText;
-            }
-            canvas.drawText(mFirstNextDigitText, mFirstNextDigitBaseline.x, mFirstNextDigitBaseline.y, mTextPaint);
-        }
         canvas.drawText(mFirstDigitText, mFirstDigitBaseline.x, mFirstDigitBaseline.y, mTextPaint);
+        canvas.drawText(mFirstNextDigitText, mFirstNextDigitBaseline.x, mFirstNextDigitBaseline.y, mTextPaint);
 
-        if (mHasSecondDigitChanged) {
-            // Go above top of this view
-            mSecondDigitBaseline.y -= 16;
-            mSecondNextDigitBaseline.y -= 16;
-            if (mSecondNextDigitBaseline.y <= mDefaultBaselineY) {
-                mHasSecondDigitChanged = false;
-                // Swap again so the "next" digit will become the current settled digit :)
-                mSecondDigitBaseline.y = mDefaultBaselineY;
-                mSecondNextDigitBaseline.y = mDefaultOuterBaselineY;
-
-                mSecondDigitText = mSecondNextDigitText;
-            }
-            canvas.drawText(mSecondNextDigitText, mSecondNextDigitBaseline.x, mSecondNextDigitBaseline.y, mTextPaint);
-        }
         canvas.drawText(mSecondDigitText, mSecondDigitBaseline.x, mSecondDigitBaseline.y, mTextPaint);
-
-        postInvalidateDelayed(16);
+        canvas.drawText(mSecondNextDigitText, mSecondNextDigitBaseline.x, mSecondNextDigitBaseline.y, mTextPaint);
     }
 
     public void setNextTime(int time) {
+        if (time < 0) throw new RuntimeException("Time must not smaller than 0");
+
         int firstDigit = time / 10;
         int secondDigit = time % 10;
 
@@ -110,20 +87,97 @@ public class TimeCountDownView extends AppCompatTextView {
             mHasFirstDigitChanged = true;
             mFirstDigit = firstDigit;
             mFirstNextDigitText = String.valueOf(firstDigit);
-
-            mFirstDigitBaseline.y = mDefaultBaselineY;
-            mFirstNextDigitBaseline.y = mDefaultOuterBaselineY;
         }
         if (mSecondDigit != secondDigit) {
             mHasSecondDigitChanged = true;
             mSecondDigit = secondDigit;
             mSecondNextDigitText = String.valueOf(secondDigit);
-
-            mSecondDigitBaseline.y = mDefaultBaselineY;
-            mSecondNextDigitBaseline.y = mDefaultOuterBaselineY;
         }
 
-        invalidate();
+        if (mHasFirstDigitChanged || mHasSecondDigitChanged) {
+            startAnimator();
+        }
+    }
+
+    private void startAnimator() {
+        if (mTimeAnimator != null) {
+            if (mTimeAnimator.isRunning())
+                mTimeAnimator.cancel();
+        }
+        mTimeAnimator = ValueAnimator.ofFloat(mDefaultBaselineY, 0);
+        mTimeAnimator.setInterpolator(new OvershootInterpolator(1f));
+        mTimeAnimator.setDuration(600);
+        mTimeAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float newY = (float) animation.getAnimatedValue();
+
+                if (mHasFirstDigitChanged) {
+                    // Go above top of this view
+                    mFirstDigitBaseline.y = newY;
+                    mFirstNextDigitBaseline.y = mFirstDigitBaseline.y + mDefaultBaselineY;
+                }
+
+                if (mHasSecondDigitChanged) {
+                    // Go above top of this view
+                    mSecondDigitBaseline.y = newY;
+                    mSecondNextDigitBaseline.y = mSecondDigitBaseline.y + mDefaultBaselineY;
+                }
+
+                invalidate();
+            }
+        });
+        mTimeAnimator.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                if (mHasFirstDigitChanged) {
+                    mFirstDigitBaseline.y = mDefaultBaselineY;
+                    mFirstNextDigitBaseline.y = mDefaultOuterBaselineY;
+                }
+                if (mHasSecondDigitChanged) {
+                    mSecondDigitBaseline.y = mDefaultBaselineY;
+                    mSecondNextDigitBaseline.y = mDefaultOuterBaselineY;
+                }
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mHasFirstDigitChanged = false;
+                // Swap again so the "next" digit will become the current settled digit :)
+                mFirstDigitBaseline.y = mDefaultBaselineY;
+                mFirstNextDigitBaseline.y = mDefaultOuterBaselineY;
+                mFirstDigitText = mFirstNextDigitText;
+
+                Log.i("debug_test","--> " + mSecondDigitBaseline.y + " " + mSecondNextDigitBaseline.y);
+                mHasSecondDigitChanged = false;
+                // Swap again so the "next" digit will become the current settled digit :)
+                mSecondDigitBaseline.y = mDefaultBaselineY;
+                mSecondNextDigitBaseline.y = mDefaultOuterBaselineY;
+                mSecondDigitText = mSecondNextDigitText;
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                mHasFirstDigitChanged = false;
+                // Swap again so the "next" digit will become the current settled digit :)
+                mFirstDigitBaseline.y = mDefaultBaselineY;
+                mFirstNextDigitBaseline.y = mDefaultOuterBaselineY;
+                mFirstDigitText = mFirstNextDigitText;
+
+                mHasSecondDigitChanged = false;
+                // Swap again so the "next" digit will become the current settled digit :)
+                mSecondDigitBaseline.y = mDefaultBaselineY;
+                mSecondNextDigitBaseline.y = mDefaultOuterBaselineY;
+                mSecondDigitText = mSecondNextDigitText;
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+
+            }
+        });
+
+        mTimeAnimator.start();
     }
 
     public void setFirstTime(String firstTime) {
