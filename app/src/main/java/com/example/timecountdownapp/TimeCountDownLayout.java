@@ -68,7 +68,6 @@ public class TimeCountDownLayout extends LinearLayout {
         if (mDays <= 0) {
             mVgDay.setVisibility(View.GONE);
         }
-        startTimer();
     }
 
     private boolean checkIfCouldHandleTime(long totalSeconds) {

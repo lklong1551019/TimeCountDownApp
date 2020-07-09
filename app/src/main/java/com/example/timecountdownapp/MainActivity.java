@@ -14,6 +14,7 @@ public class MainActivity extends AppCompatActivity {
 
         mLayout = findViewById(R.id.timeCountDown);
         mLayout.setCountdownInterval(86405000L);
+        mLayout.startTimer();
     }
 
     @Override
