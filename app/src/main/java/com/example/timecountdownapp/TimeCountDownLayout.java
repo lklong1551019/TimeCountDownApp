@@ -3,8 +3,6 @@ package com.example.timecountdownapp;
 import android.content.Context;
 import android.os.CountDownTimer;
 import android.util.AttributeSet;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
@@ -13,8 +11,6 @@ import androidx.annotation.Nullable;
  * Created by longlk on 8/7/2020
  * */
 public class TimeCountDownLayout extends LinearLayout {
-
-    private ViewGroup mVgDay;
 
     private TimeCountDownView mTvDay;
     private TimeCountDownView mTvHour;
@@ -41,8 +37,6 @@ public class TimeCountDownLayout extends LinearLayout {
         super(context, attrs, defStyleAttr);
         inflate(context, R.layout.layout_time_count_down, this);
 
-        mVgDay = findViewById(R.id.vgDay);
-
         mTvDay = findViewById(R.id.tvDayCount);
         mTvHour = findViewById(R.id.tvHourCount);
         mTvMinute = findViewById(R.id.tvMinuteCount);
@@ -64,10 +58,6 @@ public class TimeCountDownLayout extends LinearLayout {
             return;
 
         updateTimes();
-
-        if (mDays <= 0) {
-            mVgDay.setVisibility(View.GONE);
-        }
     }
 
     private boolean checkIfCouldHandleTime(long totalSeconds) {
