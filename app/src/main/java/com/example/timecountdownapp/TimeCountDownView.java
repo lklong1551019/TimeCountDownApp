@@ -42,7 +42,9 @@ public class TimeCountDownView extends AppCompatTextView {
     private int mPreMeasuredHeight;
     private float mDefaultBaselineY;
     private float mDefaultOuterBaselineY;
+    private int mTextHeight = 0;
 
+    private boolean mIsUpward = false;
     private boolean mHasFirstDigitChanged = false;
     private boolean mHasSecondDigitChanged = false;
     private ValueAnimator mTimeAnimator;
@@ -129,9 +131,8 @@ public class TimeCountDownView extends AppCompatTextView {
         if (mTimeAnimator != null && mTimeAnimator.isRunning()) {
             mTimeAnimator.cancel();
         }
-        // Perhaps due to some rounding issues when use canvas.drawText (floating number)
-        //  that some digit exceeds 1 pixel at the top, so make it go to -1 instead of 0 :)
-        mTimeAnimator = ValueAnimator.ofFloat(mDefaultBaselineY, -1);
+
+        mTimeAnimator = ValueAnimator.ofFloat(mDefaultBaselineY, mIsUpward ? (mDefaultBaselineY - mTextHeight) : (mDefaultBaselineY + mTextHeight));
         mTimeAnimator.setInterpolator(new OvershootInterpolator(1f));
         mTimeAnimator.setDuration(600);
         mTimeAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -140,17 +141,17 @@ public class TimeCountDownView extends AppCompatTextView {
                 float newY = (float) animation.getAnimatedValue();
 
                 if (mHasFirstDigitChanged) {
-                    // Go above top of this view
+                    // Go above top/ below bot of this view
                     mFirstDigitBaseline.y = newY;
                     // Move gradually to the normal state
-                    mFirstNextDigitBaseline.y = mFirstDigitBaseline.y + mDefaultBaselineY;
+                    mFirstNextDigitBaseline.y = mFirstDigitBaseline.y + (mIsUpward ? mTextHeight : -mTextHeight);
                 }
 
                 if (mHasSecondDigitChanged) {
-                    // Go above top of this view
+                    // Go above top/ below bot of this view
                     mSecondDigitBaseline.y = newY;
                     // Move gradually to the normal state
-                    mSecondNextDigitBaseline.y = mSecondDigitBaseline.y + mDefaultBaselineY;
+                    mSecondNextDigitBaseline.y = mSecondDigitBaseline.y + (mIsUpward ? mTextHeight : -mTextHeight);
                 }
 
                 invalidate();
@@ -203,13 +204,13 @@ public class TimeCountDownView extends AppCompatTextView {
     }
 
     private void calculateLayoutAndDrawParams() {
-        int mTextHeight = (int) (mTextPaint.getFontMetrics().descent - mTextPaint.getFontMetrics().ascent);
+        mTextHeight = (int) (mTextPaint.getFontMetrics().descent - mTextPaint.getFontMetrics().ascent);
         int mTextWidth = (int) mTextPaint.measureText(DEFAULT_TIME_DIGIT);
         mPreMeasuredWidth = mTextWidth * 2 + getPaddingLeft() + getPaddingRight();
         mPreMeasuredHeight = mTextHeight + getPaddingTop() + getPaddingBottom();
 
         mDefaultBaselineY = getPaddingTop() - mTextPaint.getFontMetrics().ascent;
-        mDefaultOuterBaselineY = mDefaultBaselineY + mPreMeasuredHeight;
+        mDefaultOuterBaselineY = mDefaultBaselineY + (mIsUpward ? (getPaddingBottom() + mTextHeight) : -mTextHeight);
 
         // Current first digit
         mFirstDigitBaseline.x = getPaddingLeft();
